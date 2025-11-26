@@ -2,9 +2,20 @@ from datasets import load_dataset
 from typing import List, Iterable
 import torch
 from torch.utils.data import Dataset, DataLoader
+import os
 
 
 def load_wikipedia_text(language, target_chars, cache_dir=None):
+    # check if /dtu/blackhole by accessing environment variable
+
+    if cache_dir is None:
+        blackhole = os.environ.get('BLACKHOLE')
+        if blackhole:
+            cache_dir = os.path.realpath(blackhole)
+    
+
+
+
     dataset = load_dataset(
         "wikimedia/wikipedia",
         f"20231101.{language}",
@@ -100,7 +111,7 @@ def encode_corpus(tokenizer, texts: Iterable[str]) -> List[int]:
 
 
 # use 70% train, 10% val, 20% test split
-def make_dataloaders(token_ids: List[int], seq_len=256, batch_size=32, stride=None):
+def make_dataloaders(token_ids: List[int], seq_len=256, batch_size=32, stride=1):
     n = len(token_ids)
     train_end = int(n * 0.7)
     val_end = train_end + int(n * 0.1)
