@@ -7,12 +7,13 @@ import argparse
 from tokenizers import Tokenizer
 from helper_functions import encode_corpus, load_wikipedia_text, make_dataloaders
 from transformer_lm import TransformerLM
-from tqdm import tqdm  # add this at the top of your script
+from tqdm import tqdm  
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a Transformer LM")
 
+<<<<<<< HEAD
     parser.add_argument("--tokenizer_name", type=str, default="bytelevel")
     parser.add_argument("--seq_len", type=int, default=128)
     parser.add_argument("--batch_size", type=int, default=64)
@@ -21,6 +22,17 @@ def parse_args():
     parser.add_argument("--stride", type=int, default=1)
     parser.add_argument("--no_tqdm", action="store_true")
 
+=======
+    parser.add_argument("--tokenizer_name", type=str, default="bpe", help="Name of the tokenizer to use, will search for tokenizers/ARGUMENT_tokenizer.json")
+    parser.add_argument("--seq_len", type=int, default=128, help="Sequence length for training")
+    parser.add_argument("--batch_size", type=int, default=64, help="Batch size for training")
+    parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate for the optimizer")
+    parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs")
+    parser.add_argument("--stride", type=int, default=1, help="Stride for creating sequences in the dataloader")
+    parser.add_argument("--no_tqdm", action="store_true", help="Disable tqdm progress bars; useful for logging")
+    parser.add_argument("--save_every", type=int, default=0, help="Save model every N epochs")
+    parser.add_argument("--custom_name", type=str, default="", help="Custom name for saving model and history")
+>>>>>>> fea3bb56f242487810d4d41ebdcb7127f6f48475
     parser.add_argument(
         "--target_chars",
         type=int,
@@ -83,7 +95,10 @@ def train_model(tokenizer, train_loader, val_loader, model, vocab_size, device, 
         history["ppl"].append(val_ppl)
         history["throughput"].append(batch_size * num_batches / (end - start))
 
-        print(f"Epoch {epoch+1}: train_loss={avg_train_loss:.4f} | val_loss={avg_val_loss:.4f} | ppl={val_ppl:.2f}")
+        print(f"Epoch {epoch + 1}: train_loss={avg_train_loss:.4f} | val_loss={avg_val_loss:.4f} | ppl={val_ppl:.2f}")
+
+        if SAVE_EVERY > 0 and epoch % SAVE_EVERY == 0:
+            torch.save(model.state_dict(), MODEL_PATH)
 
     print("Training complete.")
     return model, history
@@ -99,9 +114,15 @@ if __name__ == "__main__":
     TARGET_CHARS = args.target_chars
     STRIDE = args.stride
     TQDM_DISABLED = args.no_tqdm
+    SAVE_EVERY = args.save_every
+    CUSTOM_NAME = args.custom_name
     TOKENIZER_PATH = f"tokenizers/{TOKENIZER_NAME}_tokenizer.json"
-    HISTORY_PATH = f"history/{TOKENIZER_NAME}_training_history.pkl"
-    MODEL_PATH = f"models/{TOKENIZER_NAME}_transformer.pth"
+    if CUSTOM_NAME:
+        HISTORY_PATH = f"history/{CUSTOM_NAME}_training_history.pkl"
+        MODEL_PATH = f"models/{CUSTOM_NAME}_transformer.pth"
+    else:   
+        HISTORY_PATH = f"history/{TOKENIZER_NAME}_training_history.pkl"
+        MODEL_PATH = f"models/{TOKENIZER_NAME}_transformer.pth"
     # Create parent directories if they don't exist
     os.makedirs(os.path.dirname(HISTORY_PATH), exist_ok=True)
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
@@ -122,6 +143,7 @@ if __name__ == "__main__":
     ids = encode_corpus(tokenizer, text)
     print(f"Total tokens collected: {len(text):,}")
 
+    # train_loader, val_loader, test_loader = make_dataloaders(ids[:SEQ_LEN*2**8], seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
     train_loader, val_loader, test_loader = make_dataloaders(ids, seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
 
     trained_model, training_history = train_model(
