@@ -13,7 +13,7 @@ from tqdm import tqdm  # add this at the top of your script
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a Transformer LM")
 
-    parser.add_argument("--tokenizer_name", type=str, default="bpe")
+    parser.add_argument("--tokenizer_name", type=str, default="bytelevel")
     parser.add_argument("--seq_len", type=int, default=128)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
