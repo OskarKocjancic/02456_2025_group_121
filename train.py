@@ -132,8 +132,8 @@ if __name__ == "__main__":
     ids = encode_corpus(tokenizer, text)
     print(f"Total tokens collected: {len(text):,}")
 
-    train_loader, val_loader, test_loader = make_dataloaders(ids[:SEQ_LEN*2**8], seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
-    # train_loader, val_loader, test_loader = make_dataloaders(ids, seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
+    # train_loader, val_loader, test_loader = make_dataloaders(ids[:SEQ_LEN*2**8], seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
+    train_loader, val_loader, test_loader = make_dataloaders(ids, seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
 
     trained_model, training_history = train_model(
         tokenizer,
