@@ -89,8 +89,6 @@ def train_model(tokenizer, train_loader, val_loader, model, vocab_size, device, 
         if SAVE_EVERY > 0 and epoch % SAVE_EVERY == 0:
             torch.save(model.state_dict(), MODEL_PATH)
 
-
-
     print("Training complete.")
     return model, history
 
@@ -112,6 +110,7 @@ if __name__ == "__main__":
         HISTORY_PATH = f"history/{CUSTOM_NAME}_training_history.pkl"
         MODEL_PATH = f"models/{CUSTOM_NAME}_transformer.pth"
     else:   
+        HISTORY_PATH = f"history/{TOKENIZER_NAME}_training_history.pkl"
         MODEL_PATH = f"models/{TOKENIZER_NAME}_transformer.pth"
     # Create parent directories if they don't exist
     os.makedirs(os.path.dirname(HISTORY_PATH), exist_ok=True)
@@ -133,8 +132,8 @@ if __name__ == "__main__":
     ids = encode_corpus(tokenizer, text)
     print(f"Total tokens collected: {len(text):,}")
 
-    # train_loader, val_loader, test_loader = make_dataloaders(ids[:SEQ_LEN*2**8], seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
-    train_loader, val_loader, test_loader = make_dataloaders(ids, seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
+    train_loader, val_loader, test_loader = make_dataloaders(ids[:SEQ_LEN*2**8], seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
+    # train_loader, val_loader, test_loader = make_dataloaders(ids, seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
 
     trained_model, training_history = train_model(
         tokenizer,
