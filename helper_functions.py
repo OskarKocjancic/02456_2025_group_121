@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 import os
 
 
-def load_wikipedia_text(language, target_chars, cache_dir=None):
+def load_wikipedia_text(language, target_chars, cache_dir=None, split="train[:70%]") :
     # check if /dtu/blackhole by accessing environment variable
 
     if cache_dir is None:
@@ -19,7 +19,7 @@ def load_wikipedia_text(language, target_chars, cache_dir=None):
     dataset = load_dataset(
         "wikimedia/wikipedia",
         f"20231101.{language}",
-        split="train",
+        split=split,
         # trust_remote_code=True,
         # uncomment this line to save to $BLACKHOLE in HPC
         cache_dir=cache_dir,
@@ -27,6 +27,7 @@ def load_wikipedia_text(language, target_chars, cache_dir=None):
 
     texts = []
     chars_collected = 0
+    dataset = dataset.shuffle(seed=42)
 
     for row in dataset:
         article = row["text"]
@@ -79,7 +80,7 @@ class NextTokenDataset(Dataset):
         return x, y
 
 
-def encode_corpus(tokenizer, texts: Iterable[str]) -> List[int]:
+def encode_corpus(tokenizer, texts: Iterable[str], print_out=True) -> List[int]:
     """Concatenate all article token-ids into one long stream."""
     all_ids: List[int] = []
 
@@ -101,12 +102,12 @@ def encode_corpus(tokenizer, texts: Iterable[str]) -> List[int]:
     vocab_size = tokenizer.get_vocab_size()
     before_count = len(all_ids)
     all_ids = [i for i in all_ids if isinstance(i, int) and 0 <= i < vocab_size]
+    if print_out:
+        if len(all_ids) < before_count:
+            print(f"Removed {before_count - len(all_ids)} invalid token IDs from corpus")
 
-    if len(all_ids) < before_count:
-        print(f"Removed {before_count - len(all_ids)} invalid token IDs from corpus")
-
-    print(f"Encoded {len(texts)} texts into {len(all_ids)} token IDs")
-    print(f"Vocabulary size: {vocab_size}")
+        print(f"Encoded {len(texts)} texts into {len(all_ids)} token IDs")
+        print(f"Vocabulary size: {vocab_size}")
     return all_ids
 
 
