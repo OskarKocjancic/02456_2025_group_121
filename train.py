@@ -8,21 +8,12 @@ from tokenizers import Tokenizer
 from helper_functions import encode_corpus, load_wikipedia_text, make_dataloaders
 from transformer_lm import TransformerLM
 from tqdm import tqdm  
+from pathlib import Path
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a Transformer LM")
 
-<<<<<<< HEAD
-    parser.add_argument("--tokenizer_name", type=str, default="bytelevel")
-    parser.add_argument("--seq_len", type=int, default=128)
-    parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--learning_rate", type=float, default=1e-4)
-    parser.add_argument("--num_epochs", type=int, default=1)
-    parser.add_argument("--stride", type=int, default=1)
-    parser.add_argument("--no_tqdm", action="store_true")
-
-=======
     parser.add_argument("--tokenizer_name", type=str, default="bpe", help="Name of the tokenizer to use, will search for tokenizers/ARGUMENT_tokenizer.json")
     parser.add_argument("--seq_len", type=int, default=128, help="Sequence length for training")
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size for training")
@@ -32,7 +23,6 @@ def parse_args():
     parser.add_argument("--no_tqdm", action="store_true", help="Disable tqdm progress bars; useful for logging")
     parser.add_argument("--save_every", type=int, default=0, help="Save model every N epochs")
     parser.add_argument("--custom_name", type=str, default="", help="Custom name for saving model and history")
->>>>>>> fea3bb56f242487810d4d41ebdcb7127f6f48475
     parser.add_argument(
         "--target_chars",
         type=int,
@@ -53,8 +43,8 @@ def train_model(tokenizer, train_loader, val_loader, model, vocab_size, device, 
 
     num_batches = len(train_loader)
     batch_size = next(iter(train_loader))[0].shape[0]
-    print("Num batches:", num_batches)
-    print("Batch size:", batch_size)
+    print("Num batches:", num_batches, flush=True)
+    print("Batch size:", batch_size, flush=True)
 
     for epoch in range(num_epochs):
         start = time.time()
@@ -95,16 +85,18 @@ def train_model(tokenizer, train_loader, val_loader, model, vocab_size, device, 
         history["ppl"].append(val_ppl)
         history["throughput"].append(batch_size * num_batches / (end - start))
 
-        print(f"Epoch {epoch + 1}: train_loss={avg_train_loss:.4f} | val_loss={avg_val_loss:.4f} | ppl={val_ppl:.2f}")
+        print(f"Epoch {epoch + 1}: train_loss={avg_train_loss:.4f} | val_loss={avg_val_loss:.4f} | ppl={val_ppl:.2f}", flush=True)
 
         if SAVE_EVERY > 0 and epoch % SAVE_EVERY == 0:
             torch.save(model.state_dict(), MODEL_PATH)
 
-    print("Training complete.")
+    print("Training complete.", flush=True)
     return model, history
 
 if __name__ == "__main__":
     args = parse_args()
+
+    PROJECT_ROOT = Path(__file__).resolve().parent
 
     TOKENIZER_NAME = args.tokenizer_name
     SEQ_LEN = args.seq_len
@@ -116,10 +108,13 @@ if __name__ == "__main__":
     TQDM_DISABLED = args.no_tqdm
     SAVE_EVERY = args.save_every
     CUSTOM_NAME = args.custom_name
-    TOKENIZER_PATH = f"tokenizers/{TOKENIZER_NAME}_tokenizer.json"
+    TOKENIZER_PATH = f"{PROJECT_ROOT}/tokenizers/{TOKENIZER_NAME}_tokenizer.json"
+
+    print("Tokenizer path:" , TOKENIZER_PATH)
+
     if CUSTOM_NAME:
-        HISTORY_PATH = f"history/{CUSTOM_NAME}_training_history.pkl"
-        MODEL_PATH = f"models/{CUSTOM_NAME}_transformer.pth"
+        HISTORY_PATH = f"{PROJECT_ROOT}/history/{CUSTOM_NAME}_training_history.pkl"
+        MODEL_PATH = f"{PROJECT_ROOT}/models/{CUSTOM_NAME}_transformer.pth"
     else:   
         HISTORY_PATH = f"history/{TOKENIZER_NAME}_training_history.pkl"
         MODEL_PATH = f"models/{TOKENIZER_NAME}_transformer.pth"
@@ -128,7 +123,7 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    print(f"Using device: {device}", flush=True)
 
     tokenizer = Tokenizer.from_file(TOKENIZER_PATH)
     vocab_size = tokenizer.get_vocab_size()
@@ -141,7 +136,7 @@ if __name__ == "__main__":
     text = text_en + text_ru
 
     ids = encode_corpus(tokenizer, text)
-    print(f"Total tokens collected: {len(text):,}")
+    print(f"Total tokens collected: {len(text):,}", flush=True)
 
     # train_loader, val_loader, test_loader = make_dataloaders(ids[:SEQ_LEN*2**8], seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
     train_loader, val_loader, test_loader = make_dataloaders(ids, seq_len=SEQ_LEN, batch_size=BATCH_SIZE, stride=STRIDE)
