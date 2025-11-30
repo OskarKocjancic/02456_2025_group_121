@@ -5,16 +5,17 @@ import pickle
 import time
 import argparse
 from tokenizers import Tokenizer
-from helper_functions import encode_corpus, load_wikipedia_text, make_dataloaders
+from helper_functions import encode_corpus, load_wikipedia_text, make_dataloaders, TiktokenWrapper
 from transformer_lm import TransformerLM
 from tqdm import tqdm  
 from pathlib import Path
+import json
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a Transformer LM")
 
-    parser.add_argument("--tokenizer_name", type=str, default="bpe", help="Name of the tokenizer to use, will search for tokenizers/ARGUMENT_tokenizer.json")
+    parser.add_argument("--tokenizer_name", type=str, default="cl100k_pretrained", help="Name of the tokenizer to use, will search for tokenizers/ARGUMENT_tokenizer.json")
     parser.add_argument("--seq_len", type=int, default=128, help="Sequence length for training")
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size for training")
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate for the optimizer")
@@ -30,7 +31,6 @@ def parse_args():
     )
 
     return parser.parse_args()
-
 
 
 def train_model(tokenizer, train_loader, val_loader, model, vocab_size, device, learning_rate, num_epochs, disable_tqdm):
@@ -93,6 +93,18 @@ def train_model(tokenizer, train_loader, val_loader, model, vocab_size, device, 
     print("Training complete.", flush=True)
     return model, history
 
+def load_any_tokenizer(path: str):
+    # First inspect the JSON
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # TikToken metadata
+    if data.get("type") == "tiktoken":
+        return TiktokenWrapper(data["encoding_name"])
+
+    # Otherwise, assume it is a HuggingFace tokenizer JSON
+    return Tokenizer.from_file(path)
+
 if __name__ == "__main__":
     args = parse_args()
 
@@ -125,7 +137,11 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}", flush=True)
 
-    tokenizer = Tokenizer.from_file(TOKENIZER_PATH)
+    if TOKENIZER_NAME == "cl100k_pretrained":
+        tokenizer = load_any_tokenizer(TOKENIZER_PATH)
+    else:
+        tokenizer = Tokenizer.from_file(TOKENIZER_PATH)
+    
     vocab_size = tokenizer.get_vocab_size()
 
     model = TransformerLM(vocab_size=vocab_size, max_seq_length=SEQ_LEN).to(device)

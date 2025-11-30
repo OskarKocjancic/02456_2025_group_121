@@ -3,7 +3,9 @@ from typing import List, Iterable
 import torch
 from torch.utils.data import Dataset, DataLoader
 import os
-
+import tiktoken
+from types import SimpleNamespace
+import json
 
 def load_wikipedia_text(language, target_chars, cache_dir=None, split="train[:70%]") :
     # check if /dtu/blackhole by accessing environment variable
@@ -129,3 +131,47 @@ def make_dataloaders(token_ids: List[int], seq_len=256, batch_size=32, stride=1)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, drop_last=True)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, drop_last=True)
     return train_loader, val_loader, test_loader
+
+class TiktokenWrapper:
+    def __init__(self, enc_name: str):
+        self.enc_name = enc_name
+        self.encoder = tiktoken.get_encoding(enc_name)
+
+    # --- API: encode returns ids + tokens ---
+    def encode(self, text: str):
+        ids = self.encoder.encode(text)
+        tokens = [self.encoder.decode([i]) for i in ids]
+        return SimpleNamespace(ids=ids, tokens=tokens)
+
+    def decode(self, ids):
+        return self.encoder.decode(ids)
+
+    def token_to_id(self, token: str):
+        ids = self.encoder.encode(token)
+        if len(ids) == 1:
+            return ids[0]
+        return None
+
+    def get_vocab_size(self):
+        return self.encoder.n_vocab
+
+    # ---------- saving ----------
+    def save(self, path: str):
+        data = {
+            "type": "tiktoken",
+            "encoding_name": self.enc_name
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        print(f"Saved TikToken tokenizer metadata to {path}")
+
+    # ---------- loading ----------
+    @staticmethod
+    def from_file(path: str):
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if data.get("type") != "tiktoken":
+            raise ValueError("Not a TikToken tokenizer metadata file")
+
+        return TiktokenWrapper(data["encoding_name"])
