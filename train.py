@@ -17,7 +17,7 @@ def parse_args():
 
     parser.add_argument("--tokenizer_name", type=str, default="cl100k_pretrained", help="Name of the tokenizer to use, will search for tokenizers/ARGUMENT_tokenizer.json")
     parser.add_argument("--seq_len", type=int, default=128, help="Sequence length for training")
-    parser.add_argument("--batch_size", type=int, default=64, help="Batch size for training")
+    parser.add_argument("--batch_size", type=int, default=256, help="Batch size for training")
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate for the optimizer")
     parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs")
     parser.add_argument("--stride", type=int, default=1, help="Stride for creating sequences in the dataloader")
