@@ -1,0 +1,4 @@
+{
+  "type": "tiktoken",
+  "encoding_name": "cl100k_base"
+}
